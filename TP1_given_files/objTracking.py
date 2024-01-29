@@ -10,32 +10,42 @@ cap = cv2.VideoCapture("TP1_given_files/randomball.avi")
 fig = plt.figure()
 frames = []
 positions = []
+trajectory = []
+
 for i in range(125):
     ret, frame = cap.read()
     if not ret:
         break
 
     centers = detect(frame)
-    detected_point = detect(frame)[0]
-    detected_point = detected_point.reshape(-1)
+    if centers:  # Check if any center is detected
+        detected_point = centers[0].reshape(-1)
 
-    kf.update(detected_point)
+        kf.update(detected_point)
+    
     kf.predict()
+    predicted_state = kf.x
 
-    # Imprimer l'état prédit pour le diagnostic
-    print("Predicted State:", kf.x.T)
+    # Store the predicted point in the trajectory
+    trajectory.append((int(predicted_state[0]), int(predicted_state[1])))
 
-    predicted_position = (int(kf.x[0, 0]), int(kf.x[1, 0]))
-    positions.append(predicted_position)
+    # Draw trajectory
+    for j in range(1, len(trajectory)):
+        cv2.line(frame, trajectory[j - 1], trajectory[j], (255, 255, 0), 2)
 
-    #for j in range(1, len(positions)):
-    #    cv2.line(frame, positions[j - 1], positions[j], (0, 255, 255), 2)
 
-    #cv2.rectangle(frame, (predicted_position[0] - 10, predicted_position[1] - 10),
-    #              (predicted_position[0] + 10, predicted_position[1] + 10), (0, 255, 0), 2)
+    if centers:
+        # Draw rectangle around detected point
+        cv2.rectangle(frame, (int(detected_point[0] - 10), int(detected_point[1] - 10)),
+                      (int(detected_point[0] + 10), int(detected_point[1] + 10)), (0, 0, 255), 2)
+        
+        # Draw a green circle at the center of the detected point
+        cv2.circle(frame, (int(detected_point[0]), int(
+            detected_point[1])), 3, (0, 255, 0), -1)
 
-    cv2.rectangle(frame, (int(detected_point[0] - 10), int(detected_point[1] - 10)),
-                  (int(detected_point[0] + 10), int(detected_point[1] + 10)), (0, 0, 255), 2)
+    # Draw red rectangle for prediction
+    cv2.rectangle(frame, (int(predicted_state[0] - 10), int(predicted_state[1] - 10)),
+                  (int(predicted_state[0] + 10), int(predicted_state[1] + 10)), (255, 0, 0), 2)
 
     frames.append(frame)
 

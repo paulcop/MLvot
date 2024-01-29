@@ -66,3 +66,6 @@ class KalmanFilter:
         # Mise à jour de la covariance de l'erreur
         I = np.eye(self.H.shape[1])
         self.P = np.dot((I - np.dot(K, self.H)), self.P)
+
+    def get_state(self):
+        return self.state
